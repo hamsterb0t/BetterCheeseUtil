@@ -1,0 +1,107 @@
+from PyInstaller.utils.hooks import collect_submodules
+
+hidden_imports = collect_submodules('eventlet') + ['greenlet']
+
+excluded_modules = ['PyQt5', 'PySide6']
+
+# datas 리스트 정의 및 system.dic 제외
+datas = [
+    ('./app/resources/chat_emoticons.json', './resources'),
+    ('./app/resources/script/chatroom.js', './resources/script'), 
+    ('./app/resources/script/remote.js', './resources/script'), 
+    ('./app/resources/script/chatroom_get_popup.js', './resources/script'),
+    ('./app/resources/script/remote_auto_mission.js', './resources/script'), 
+    ('./app/resources/script/show_info_section.js', './resources/script'), 
+    ('./app/resources/script/remote_auto_video_donation_disable.js', './resources/script'), 
+    ('./app/resources/script/remote_auto_mission.js', './resources/script'), 
+    ('./app/resources/templates/ydText_template.html', './resources/templates'), 
+    ('./app/resources/templates/donationimg_template.html', './resources/templates'),
+    ('./app/resources/templates/prediction_overlay.html', './resources/templates'),
+    ('./app/resources/icon/icon_BCU.ico', './resources/icon'),
+    ('./app/resources/icon/dongmad.png', './resources/icon'),
+    ('./app/resources/icon/pause.png', './resources/icon'),
+    ('./app/resources/icon/pause-white.png', './resources/icon'), 
+    ('./app/resources/icon/playpause.png', './resources/icon'), 
+    ('./app/resources/icon/playpause-white.png', './resources/icon'), 
+    ('./app/resources/icon/refresh.png', './resources/icon'), 
+    ('./app/resources/icon/refresh-white.png', './resources/icon'), 
+    ('./app/resources/icon/zoom-in.png', './resources/icon'), 
+    ('./app/resources/icon/zoom-in-white.png', './resources/icon'), 
+    ('./app/resources/icon/rewind.png', './resources/icon'), 
+    ('./app/resources/icon/rewind-white.png', './resources/icon'), 
+    ('./app/resources/icon/skip.png', './resources/icon'), 
+    ('./app/resources/icon/skip-white.png', './resources/icon'), 
+    ('./app/resources/icon/subtitle.png', './resources/icon'), 
+    ('./app/resources/icon/subtitle-white.png', './resources/icon'), 
+    ('./app/resources/icon/mic.png', './resources/icon'), 
+    ('./app/resources/icon/mic-white.png', './resources/icon'), 
+    ('./app/resources/icon/popup.png', './resources/icon'), 
+    ('./app/resources/icon/popup-white.png', './resources/icon'), 
+    ('./app/resources/icon/X.png', './resources/icon'), 
+    ('./app/resources/mp3/noti.mp3', './resources/mp3'),
+    ('./app/resources/fonts/PretendardJP-Regular.ttf', './resources/fonts'),
+    ('./app/resources/fonts/SB Aggro M.ttf', './resources/fonts'),
+    ('./app/resources/img/background_0.png', './resources/img'),
+    ('./app/resources/img/cheese.png', './resources/img'),
+    ('./app/resources/img/cheese_10000.png', './resources/img'),
+    ('./app/resources/img/cheese_30000.png', './resources/img'),
+    ('./app/resources/img/cheese_50000.png', './resources/img'),
+    ('./app/resources/img/cheese_70000.png', './resources/img'),
+    ('./app/resources/img/cheese_100000.png', './resources/img'),
+    ('./app/resources/img/cheese_200000.png', './resources/img'),
+    ('./app/resources/img/cheese_500000.png', './resources/img'),
+    ('./app/resources/img/cheese_1000000.png', './resources/img'),
+    ('./app/resources/img/subgift_1.png', './resources/img'),
+    ('./app/resources/img/subgift_2.png', './resources/img'),
+    ('./app/resources/img/cheese_10000.gif', './resources/img'),
+    ('./app/resources/img/cheese_30000.gif', './resources/img'),
+    ('./app/resources/img/cheese_200000.gif', './resources/img'),
+    ('./app/resources/img/cheese_500000.gif', './resources/img'),
+    ('./app/resources/img/cheese_1000000.gif', './resources/img')
+]
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=datas,
+    hiddenimports=hidden_imports,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=excluded_modules,
+    noarchive=False,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    exclude_modules=excluded_modules,
+    name='Better Cheese 유틸리티',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=['portaudio.dll', 'python3X.dll', 'VCRUNTIME140.dll'],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['./app/resources/icon/icon_BCU.ico'],
+)
+
+#coll = COLLECT(
+#    exe,
+#    a.binaries,
+#    a.datas,
+#    strip=False,
+#    upx=True,
+#    upx_exclude=['portaudio.dll', 'python3X.dll', 'VCRUNTIME140.dll'],
+#    name='Better Cheese 유틸리티'
+#)

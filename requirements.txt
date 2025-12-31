@@ -1,0 +1,17 @@
+# requirements.txt
+chzzkpy
+clipboard
+Flask
+Flask-Cors
+Flask-SocketIO
+gevent
+Pillow
+playsound
+psutil
+pyautogui
+PyQt6
+PyQt6-WebEngine==6.9.0
+pygame
+pywin32
+pyqtdarktheme
+requests

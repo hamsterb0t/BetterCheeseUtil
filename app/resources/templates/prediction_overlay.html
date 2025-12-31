@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>치지직 승부예측 오버레이</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #2b2b2b;
+            --text-color: #ffffff;
+            --highlight-color: #00ce7c;
+            --item-red: #ff4d4d;
+            --item-blue: #83a2ff;
+            --item-green: #00ce7c;
+            --item-yellow: #ffd700;
+        }
+
+        body.light-mode {
+            --bg-color: #f0f0f0;
+            --text-color: #000000;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: transparent;
+            /* Changed to transparent for OBS */
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #main-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        #header {
+            height: 20%;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+
+        #status-badge {
+            background-color: var(--highlight-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+            white-space: nowrap;
+            font-size: 1.6rem;
+        }
+
+        #timer-badge {
+            background-color: #555;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+            white-space: nowrap;
+            font-size: 1.6rem;
+            display: none;
+            /* Hidden by default */
+        }
+
+        #title-container {
+            flex-grow: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        #title-text {
+            display: inline-block;
+            animation: marquee 10s linear infinite;
+        }
+
+        .marquee-paused {
+            animation: none !important;
+        }
+
+        #content {
+            height: 80%;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+
+        .item-box {
+            flex-grow: 1;
+            flex-basis: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: all 0.3s;
+            min-width: 0;
+            /* Important for flex shrinking */
+        }
+
+        .item-box:last-child {
+            border-right: none;
+        }
+
+        .item-header {
+            height: 35%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            /* Handled: Smaller font */
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0 5px;
+            text-align: center;
+            line-height: 1.1;
+            /* Handled: Ellipsis */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        /* inner span for text overflow */
+        .item-header span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+            display: block;
+        }
+
+        .item-body {
+            height: 65%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            /* Handled: Smaller font */
+            font-weight: 800;
+            position: relative;
+        }
+
+        .item-ratio {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        /* Winner Highlight */
+        .winner-box {
+            background: linear-gradient(to bottom, rgba(0, 206, 124, 0.2), rgba(0, 206, 124, 0.5));
+            /* Green Gradient */
+            box-shadow: inset 0 0 0 4px #00ce7c;
+            /* Green Border (Inset) */
+            z-index: 10;
+        }
+
+
+        /* Item Colors */
+        .color-0 .item-body {
+            color: var(--item-red);
+        }
+
+        .color-1 .item-body {
+            color: var(--item-blue);
+        }
+
+        .color-2 .item-body {
+            color: var(--item-green);
+        }
+
+        .color-3 .item-body {
+            color: var(--item-yellow);
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+
+<body>
+    <div id="main-container">
+        <div id="header">
+            <div id="status-badge">대기중</div>
+            <div id="timer-badge"></div>
+            <div id="title-container">
+                <span id="title-text">승부예측 정보를 기다리고 있습니다...</span>
+            </div>
+        </div>
+        <div id="content">
+            <!-- Items will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const socket = io("http://localhost:5000");
+        const mainContainer = document.getElementById('main-container');
+        const header = document.getElementById('header');
+        const statusBadge = document.getElementById('status-badge');
+        const timerBadge = document.getElementById('timer-badge');
+        const titleText = document.getElementById('title-text');
+        const content = document.getElementById('content');
+
+        // URL Params for Settings
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+
+        function updateUI(data) {
+            // Update Status
+            let statusText = "대기중";
+            let statusColor = "#666";
+
+            if (data.status === "ONGOING") {
+                statusText = "베팅 진행중";
+                statusColor = "#00ce7c"; // Green
+            } else if (data.status === "CLOSED") {
+                statusText = "결과 대기중";
+                statusColor = "#ff4d4d"; // Red
+            } else if (data.status === "RESULT") {
+                statusText = "결과 발표";
+                statusColor = "#ffd700"; // Gold
+                statusBadge.style.color = "black";
+            }
+
+            statusBadge.innerText = statusText;
+            statusBadge.style.backgroundColor = statusColor;
+
+            if (data.status === "ONGOING" || data.status === "RESULT") {
+                statusBadge.style.color = "black";
+            } else {
+                statusBadge.style.color = "white";
+            }
+
+            if (data.status === "WAITING") {
+                mainContainer.style.opacity = '1'; // Show 'waiting' message
+                document.getElementById('title-text').innerText = "승부예측 대기중...";
+                content.innerHTML = "";
+                mainContainer.style.opacity = '0';
+                return;
+            } else {
+                mainContainer.style.opacity = '1';
+            }
+
+            // Update Timer
+            if (data.timer) {
+                timerBadge.innerText = data.timer;
+                timerBadge.style.display = "block";
+            } else {
+                timerBadge.style.display = "none";
+            }
+
+            // Update Title
+            titleText.innerText = data.title;
+            // Force redraw/calculation
+            const containerWidth = document.getElementById('title-container').offsetWidth;
+            const textWidth = titleText.offsetWidth;
+
+            // Allow a small buffer (e.g. 5px) to prevent jitter
+            if (textWidth > containerWidth + 5) {
+                titleText.style.animation = `marquee ${textWidth / 30}s linear infinite`;
+                titleText.classList.remove('marquee-paused');
+            } else {
+                titleText.style.animation = 'none';
+                titleText.classList.add('marquee-paused');
+                titleText.style.transform = 'translateX(0)';
+            }
+
+            // Update Items
+            content.innerHTML = '';
+            const items = data.items || [];
+            const itemCount = items.length;
+
+            items.forEach((item, index) => {
+                const box = document.createElement('div');
+                box.className = `item-box color-${index % 4}`;
+
+                // Winner Highlight
+                if (data.status === "RESULT" && item.isWinner) {
+                    box.classList.add('winner-box');
+                }
+
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'item-header';
+                const headerSpan = document.createElement('span');
+                headerSpan.innerText = item.name;
+                headerDiv.appendChild(headerSpan);
+
+                const bodyDiv = document.createElement('div');
+                bodyDiv.className = 'item-body';
+                bodyDiv.innerText = item.percent;
+                box.appendChild(headerDiv);
+                box.appendChild(bodyDiv);
+
+                content.appendChild(box);
+            });
+        }
+
+        socket.on('prediction_update', (data) => {
+            console.log("Update received", data);
+            updateUI(data);
+        });
+    </script>
+</body>
+
+</html>
