@@ -1,0 +1,7 @@
+/build
+/dist
+compile_v2.bat
+*.pyc
+__pycache__/
+venv/
+.venv/

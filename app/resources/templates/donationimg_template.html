@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.4.1/dist/socket.io.min.js"></script>
+    <style>
+        #imageContainer {
+            position: relative;
+            width: 360px;
+            height: 360px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #displayedImage {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let socket;
+        function setupWebSocket() {
+            socket = io("http://127.0.0.1:5000");
+
+            socket.on('connect', () => console.log("Socket.IO 연결 성공!"));
+
+            socket.on("image_update", (data) => {
+                const container = document.getElementById("imageContainer");
+                const displayedImg = document.getElementById("displayedImage");
+                if(data.path === "blank") {
+                    container.style.backgroundImage = "none";
+                    displayedImg.style.display = "none";
+                } else {
+                    const timestamp = new Date().getTime();
+                    container.style.backgroundImage = `url("file:///${data.backpath}")`;
+                    displayedImg.style.display = "block";
+                    displayedImg.src = data.path + "?t=" + timestamp;
+                }
+            });
+
+            socket.on("disconnect", () => {
+                const container = document.getElementById("imageContainer");
+                const displayedImg = document.getElementById("displayedImage");
+                container.style.backgroundImage = "none";
+                displayedImg.style.display = "none";
+                console.log("Socket.IO 연결이 닫혔습니다. Reconnecting...");
+                setTimeout(setupWebSocket, 1000);
+            });
+        }
+        window.onload = setupWebSocket;
+    </script>
+    <div id="imageContainer">
+        <img id="displayedImage" src="" alt="Image">
+    </div>
+</body>
+</html>

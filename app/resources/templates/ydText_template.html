@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.4.1/dist/socket.io.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: transparent;
+        }
+        #textContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: auto;
+            font-family:"궁서체", Sans-Serif;
+            font-size: 90px;
+            line-height: 90px;
+            font-weight: 1000;
+            color: yellow;
+            -webkit-text-stroke: 4px black;
+            text-stroke: 4px black;
+            white-space: nowrap;
+            letter-spacing: -3px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let socket;
+        function setupWebSocket() {
+            socket = io("http://127.0.0.1:5000");
+
+            socket.on('connect', () => console.log("Socket.IO 연결 성공!"));
+
+            socket.on("text_update", (data) => {
+                const textContainer = document.getElementById("textContainer");
+                if (data.text === "" || data.text === "blank") {
+                    textContainer.style.display = "none";
+                    textContainer.textContent = "";
+                } else {
+                    textContainer.textContent = data.text;
+                    textContainer.style.display = "block";
+                }
+            });
+
+            socket.on("disconnect", () => {
+                const textContainer = document.getElementById("textContainer");
+                textContainer.style.display = "none";
+                textContainer.textContent = "";
+                console.log("Socket.IO 연결이 닫혔습니다. Reconnecting...");
+                setTimeout(setupWebSocket, 1000);
+            });
+        }
+        window.onload = setupWebSocket;
+    </script>
+    <div id="textContainer"></div>
+</body>
+</html>
