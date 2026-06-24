@@ -1,5 +1,9 @@
 # BCU (Better Cheese 유틸리티)
 
+> [!WARNING]
+> **개인 사정으로 개발이 중단되었습니다.**  
+> 본 프로그램을 사용하고자 하는 스트리머 분들께서는 유지보수가 이루어지고 있는 다음 리포지토리를 확인해주세요: [링크](https://github.com/Uknong/BetterCheeseUtil)
+
 ## 소개
 **BCU(Better Cheese 유틸리티)는 치지직 스트리머를 위한 강력한 방송 보조 유틸리티입니다!**
 
